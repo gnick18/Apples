@@ -1,0 +1,125 @@
+---
+title: "group_project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library("knitr")
+library("BiocStyle")
+library("dada2")
+library("phyloseq")
+library("DECIPHER")
+library("phangorn")
+.cran_packages <- c("ggplot2", "gridExtra")
+.bioc_packages <- c("dada2", "phyloseq", "DECIPHER", "phangorn")
+.inst <- .cran_packages %in% installed.packages()
+if(any(!.inst)) {
+   install.packages(.cran_packages[!.inst])
+}
+.inst <- .bioc_packages %in% installed.packages()
+#if(any(!.inst)) {
+ #  source("http://bioconductor.org/biocLite.R")
+ #  biocLite(.bioc_packages[!.inst], ask = F)
+#}
+# Load packages into session, and print package version
+sapply(c(.cran_packages, .bioc_packages), require, character.only = TRUE)
+```
+
+
+```{r}
+path <- "U:/Documents/ISU Classes/BCB 546X/ena_files"   #Change to the directory where the fastq files are after unzipping
+list.files(path)
+```
+
+Next I read in the files that contain the reads from just the apple seeds samples. I renamed the files from the default names the ENA provided to have the suffix "_seeds" to make them easier to separate from the rst of the fastq files.
+```{r}
+seeds <- sort(list.files(path, pattern="_seed.fastq", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(seeds), "_"), `[`, 1)
+```
+
+Next I plotted the quality scores for each sample.
+```{r}
+plotQualityProfile(seeds[1:8])
+```
+
+I set up the object to place the filtered reads in.
+```{r}
+filtSeeds <- file.path(path, "filtered", paste0(sample.names, "filt.fastq"))
+names(filtSeeds) <- sample.names
+```
+
+Next I filtered the reads using the default settings.
+```{r}
+out <- filterAndTrim(seeds, filtSeeds, truncQ = 2, truncLen = 0, maxLen = Inf, rm.phix=TRUE,
+              compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE
+head(out)
+```
+
+Then we learn the error rates of basecalling in the reads.
+```{r}
+errF <- learnErrors(filtSeeds, multithread=FALSE)
+```
+
+We plot the error rates to examine them.
+```{r}
+plotErrors(errF, nominalQ=TRUE)
+```
+
+Now we are ready to align the reads to reference sequences.
+```{r}
+dadaSeeds <- dada(filtSeeds, err=errF, multithread=TRUE)
+```
+
+```{r}
+seqtab <- makeSequenceTable(dadaSeeds)
+dim(seqtab)
+```
+```{r}
+table(nchar(getSequences(seqtab)))
+```
+
+Remove chimeras.
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=FALSE, verbose=TRUE)
+```
+
+And assign taxonomy. This could have been done using species level as well.
+```{r}
+taxa <- assignTaxonomy(seqtab.nochim, "U:/Documents/ISU Classes/BCB 546X/ena_files/silva_nr_v132_train_set.fa.gz", multithread=FALSE)
+```
+
+```{r}
+samples.out <- rownames(seqtab.nochim)
+library(dplyr)
+```
+
+Next I created the metadata.
+```{r}
+samples.out <- as.data.frame(samples.out)
+samples.out <- mutate(samples.out, tissue = c('seed', 'seed', 'seed', 'seed', 'seed', 'seed', 'seed', 'seed'))
+samples.out <- mutate(samples.out, mngmt = c('conventional', 'conventional', 'conventional', 'conventional', 'organic', 'organic', 'organic', 'organic'))
+rownames(samples.out) <- samples.out$samples.out
+samples.out$samples.out <- NULL
+```
+
+And finally generated the phyloseq object.
+```{r}
+apples <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows = FALSE), sample_data(samples.out), tax_table(taxa))
+```
+
+```{r}
+dna <- Biostrings::DNAStringSet(taxa_names(apples))
+names(dna) <- taxa_names(apples)
+apples <- merge_phyloseq(apples, dna)
+taxa_names(apples) <- paste0("ASV", seq(ntaxa(apples)))
+```
+
+```{r}
+saveRDS(apples, "../apples.RDS")
+```
