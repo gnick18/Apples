@@ -18,12 +18,15 @@ BiocManager::install(c("dada2"))
 BiocManager::install(c("phyloseq"))
 BiocManager::install(c("DECIPHER"))
 BiocManager::install(c("phangorn"))
+BiocManager::install(c("phangorn"))
+BiocManager::install(c("msa"))
 library("knitr")
 library("BiocStyle")
 library("dada2")
 library("phyloseq")
 library("DECIPHER")
 library("phangorn")
+library("msa")
 .cran_packages <- c("ggplot2", "gridExtra")
 .bioc_packages <- c("dada2", "phyloseq", "DECIPHER", "phangorn")
 .inst <- .cran_packages %in% installed.packages()
@@ -122,6 +125,31 @@ taxa <- assignTaxonomy(seqtab.nochim, "C:/Users/ccarley/Desktop/unzipped/silva_n
 ```{r}
 library(dplyr)
 samples.out <- rownames(seqtab.nochim)
+```
+
+
+Test for phylogenetic tree.
+```{r}
+seqs <- getSequences(seqtab)
+names(seqs) <- seqs # This propagates to the tip labels of the tree
+mult <- msa(seqs, method="ClustalW", type="dna", order="input")
+```
+
+
+
+```{r}
+library("phangorn")
+phang.align <- as.phyDat(mult, type="DNA", names=getSequence(seqtab))
+dm <- dist.ml(phang.align)
+treeNJ <- NJ(dm) # Note, tip order != sequence order
+fit = pml(treeNJ, data=phang.align)
+
+## negative edges length changed to 0!
+
+fitGTR <- update(fit, k=4, inv=0.2)
+fitGTR <- optim.pml(fitGTR, model="GTR", optInv=TRUE, optGamma=TRUE,
+                       rearrangement = "stochastic", control = pml.control(trace = 0))
+detach("package:phangorn", unload=TRUE)
 ```
 
 Next I created the metadata.
