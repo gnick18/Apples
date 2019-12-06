@@ -1,0 +1,62 @@
+# Loading in RDS Phyloseq files (code by Abby Schaefer)
+
+```{r}
+source('http://bioconductor.org/biocLite.R')
+biocLite('phyloseq')
+
+#If bioconductor wont work in your environment you can use BiocManager as shown below to instal the phyloseq package
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(c("phyloseq"))
+
+
+setwd("./Apples/") #set this to the location you downloaded the apples.RDS file. Otherwise this won't work!
+library(phyloseq)
+library(tidyverse)
+
+seeds <- readRDS("seeds.RDS")
+pulp <- readRDS("fruit_pulp.RDS")
+calyx <- readRDS("calyx_end.RDS")
+peel <- readRDS("peel.RDS")
+apples <- merge_phyloseq(seeds,pulp,calyx,peel)
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+otu_table_copy <- apples@otu_table
+
+rows <- nrow(otu_table_copy)
+
+reads <- c()
+sample_name <- c()
+
+for (i in 1:nrow(otu_table_copy)) {
+  total_reads <- sum(otu_table_copy[i])
+  sample <- row.names(otu_table_copy[i])
+  reads[i] <- total_reads
+  sample_name[i] <- sample
+}
+
+sample_name
+reads
+
+reads_count.data <- data.frame(sample_name,reads)
+
+reads_count.data
+
+```
+
+```{r}
+#grep each sample line
+#save sample as variable
+#sum all counts for each variable
+#put this into a data frame somehow
+#ggplot, bar graph
+
+```
+
