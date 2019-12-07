@@ -66,32 +66,36 @@ sample.names <- sapply(strsplit(basename(calyx_end), "_"), `[`, 1)
 
 Here I'm sorting out the different tissue types by files. 
 ```{r}
-seeds <- sort(list.files(path, pattern="Seed.", full.names = TRUE))
-sample.names <- sapply(strsplit(basename(seeds), "_"), `[`, 1)
+Stem2 <- sort(list.files(path, pattern="St.C",
+full.names = TRUE))
+Stem3 <- sort(list.files(path, pattern="St.H",
+full.names = TRUE))
+Stem <- c(Stem2, Stem3)
+sample.names <- sapply(strsplit(basename(Stem), "_"), `[`, 1)
 
 ```
 
 #Next I plotted the quality scores for each sample.
 #```{r}
-#plotQualityProfile(seeds[1:8])
+#plotQualityProfile(Stems[1:8])
 #```
 
 I set up the object to place the filtered reads in.
 ```{r}
-filtSeeds <- file.path(path, "filtered", paste0(sample.names, "filt.fastq"))
-names(filtSeeds) <- sample.names
+filtStem <- file.path(path, "filtered", paste0(sample.names, "filt.fastq"))
+names(filtStem) <- sample.names
 ```
 
 Next I filtered the reads using the default settings.
 ```{r}
-out <- filterAndTrim(seeds, filtSeeds, truncQ = 2, truncLen = 0, maxLen = Inf, rm.phix=TRUE,
+out <- filterAndTrim(Stem, filtStem, truncQ = 2, truncLen = 0, maxLen = Inf, rm.phix=TRUE,
               compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE
 head(out)
 ```
 
 Then we learn the error rates of basecalling in the reads.
 ```{r}
-errF <- learnErrors(filtSeeds, multithread=TRUE)
+errF <- learnErrors(filtStem, multithread=TRUE)
 ```
 
 #We plot the error rates to examine them.
@@ -101,11 +105,11 @@ errF <- learnErrors(filtSeeds, multithread=TRUE)
 
 Now we are ready to align the reads to reference sequences.
 ```{r}
-dadaSeeds <- dada(filtSeeds, err=errF, multithread=TRUE)
+dadaStem <- dada(filtStem, err=errF, multithread=TRUE)
 ```
 
 ```{r}
-seqtab <- makeSequenceTable(dadaSeeds)
+seqtab <- makeSequenceTable(dadaStem)
 dim(seqtab)
 ```
 ```{r}
@@ -155,7 +159,7 @@ detach("package:phangorn", unload=TRUE)
 Next I created the metadata.
 ```{r}
 samples.out <- as.data.frame(samples.out)
-samples.out <- mutate(samples.out, tissue = c('seed', 'seed', 'seed', 'seed', 'seed', 'seed', 'seed', 'seed'))
+samples.out <- mutate(samples.out, tissue = c('Stem', 'Stem', 'Stem', 'Stem', 'Stem', 'Stem', 'Stem', 'Stem'))
 samples.out <- mutate(samples.out, mngmt = c('conventional', 'conventional', 'conventional', 'conventional', 'organic', 'organic', 'organic', 'organic'))
 rownames(samples.out) <- samples.out$samples.out
 samples.out$samples.out <- NULL
@@ -163,16 +167,16 @@ samples.out$samples.out <- NULL
 
 And finally generated the phyloseq object.
 ```{r}
-seeds <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows = FALSE), sample_data(samples.out), tax_table(taxa))
+Stemgen <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows = FALSE), sample_data(samples.out), tax_table(taxa))
 ```
 
 ```{r}
-dna <- Biostrings::DNAStringSet(taxa_names(seeds))
-names(dna) <- taxa_names(seeds)
-seeds <- merge_phyloseq(seeds, dna)
-taxa_names(seeds) <- paste0("ASV", seq(ntaxa(seeds)))
+dna <- Biostrings::DNAStringSet(taxa_names(Stem))
+names(dna) <- taxa_names(Stem)
+Stem <- merge_phyloseq(Stem, dna)
+taxa_names(Stem) <- paste0("ASV", seq(ntaxa(Stem)))
 ```
 
 ```{r}
-saveRDS(seeds, "../seeds.RDS")
+saveRDS(Stem, "../Stem.RDS")
 ```
