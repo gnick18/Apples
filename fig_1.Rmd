@@ -1,4 +1,4 @@
-# Loading in RDS Phyloseq files (code by Abby Schaefer)
+# Loading in RDS Phyloseq files (this part of the code by Abby Schaefer)
 
 ```{r}
 source('http://bioconductor.org/biocLite.R')
@@ -14,12 +14,13 @@ setwd("./Apples/") #set this to the location you downloaded the apples.RDS file.
 library(phyloseq)
 library(tidyverse)
 
-seeds <- readRDS("seeds.RDS")
-pulp <- readRDS("fruit_pulp.RDS")
-calyx <- readRDS("calyx_end.RDS")
-peel <- readRDS("peel.RDS")
-#stem <-readRDS("stem.RDS")
-apples <- merge_phyloseq(seeds,pulp,calyx,peel)
+seeds <- readRDS("./PhyloObj/seeds.RDS")
+pulp <- readRDS("./PhyloObj/fruit_pulp.RDS")
+calyx <- readRDS("./PhyloObj/calyx_end.RDS")
+peel <- readRDS("./PhyloObj/peel.RDS")
+stem <- readRDS("./PhyloObj/Stem.RDS")
+stem_end <- readRDS("./PhyloObj/Stem_end.RDS")
+apples <- merge_phyloseq(stem,stem_end,peel,pulp,seeds,calyx)
 
 ```
 
@@ -28,41 +29,74 @@ apples <- merge_phyloseq(seeds,pulp,calyx,peel)
 
 ```
 
+
+**Reading the OTU table from the phyloseq object**
 ```{r}
 otu_table_copy <- apples@otu_table
+```
 
+**getting lists of sum of reads and sample names**
+```{r}
+#count number of rows to figure out range
 rows <- nrow(otu_table_copy)
 
+#initialize empty lists
 reads <- c()
 sample_name <- c()
 
+#fill the lists by reading each row's sum and name
 for (i in 1:nrow(otu_table_copy)) {
   total_reads <- sum(otu_table_copy[i])
   sample <- row.names(otu_table_copy[i])
   reads[i] <- total_reads
   sample_name[i] <- sample
 }
+```
 
-sample_name
-reads
 
+**Create data frame from lists**
+```{r}
 reads_count.data <- data.frame(sample_name,reads)
 
 reads_count.data
-
-ggplot(data=reads_count.data, aes(x=sample_name, y=reads,fill=sample_name), width = 600) +
-  geom_bar(stat="identity",  position = position_dodge(width = 5))+ 
-  geom_text(aes(label=reads), vjust=-0.3, size=3.5)+
-  theme_minimal()
-  
 ```
 
-```{r}
-#grep each sample line
-#save sample as variable
-#sum all counts for each variable
-#put this into a data frame somehow
-#ggplot, bar graph
+**Separating out conventional management data  to make graph less crowded**
 
+_Conventional_
+```{r}
+#grep only the conventional samples
+conventional <- reads_count.data[grep(".C", reads_count.data$sample_name), ]
+
+#make a number code to make the tickmarks readable
+conventional <- mutate(conventional, num_code = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24))
+
+#add sample type column so they can be filled according to type
+conventional <- mutate(conventional, sample_type = c("stem","stem","stem","stem","Stem end","Stem end", "Stem end", "Stem end", "Peel", "Peel","Peel","Peel","Fruit pulp","Fruit pulp","Fruit pulp", "Fruit pulp", "Seed","Seed","Seed","Seed","Calyx end","Calyx end","Calyx end", "Calyx end"))
+
+conventional
+```
+
+_Organic_
+```{r}
+organic <- reads_count.data[grep(".H", reads_count.data$sample_name), ]
+
+organic <- mutate(organic, num_code = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24))
+
+organic <- mutate(organic, sample_type = c("stem","stem","stem","stem","Stem end","Stem end", "Stem end", "Stem end", "Peel", "Peel","Peel","Peel","Fruit pulp","Fruit pulp","Fruit pulp", "Fruit pulp", "Seed","Seed","Seed","Seed","Calyx end","Calyx end","Calyx end", "Calyx end"))
+
+organic
+```
+
+**Graph of Conventional samples**
+```{r}
+ggplot(data=conventional, aes(x=num_code, y=reads,fill=sample_type)) + ylab("Number of Reads")+ xlab("Sample Number")+ ggtitle("Conventional Apples")+
+  geom_bar(stat="identity")
+```
+
+**Graph of Organic Samples**
+```{r}
+ggplot(data=organic, aes(x=num_code, y=reads,fill=sample_type)) +ylab("Number of Reads")+ xlab("Sample Number")+ ggtitle("Organic Apples")+
+  geom_bar(stat="identity")
 ```
 
