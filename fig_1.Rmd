@@ -18,6 +18,7 @@ seeds <- readRDS("seeds.RDS")
 pulp <- readRDS("fruit_pulp.RDS")
 calyx <- readRDS("calyx_end.RDS")
 peel <- readRDS("peel.RDS")
+#stem <-readRDS("stem.RDS")
 apples <- merge_phyloseq(seeds,pulp,calyx,peel)
 
 ```
@@ -49,6 +50,11 @@ reads_count.data <- data.frame(sample_name,reads)
 
 reads_count.data
 
+ggplot(data=reads_count.data, aes(x=sample_name, y=reads,fill=sample_name), width = 600) +
+  geom_bar(stat="identity",  position = position_dodge(width = 5))+ 
+  geom_text(aes(label=reads), vjust=-0.3, size=3.5)+
+  theme_minimal()
+  
 ```
 
 ```{r}
