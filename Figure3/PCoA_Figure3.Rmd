@@ -1,0 +1,121 @@
+---
+title: "PCoA_Analysis"
+author: "Grant Nickles"
+date: "12/9/2019"
+output: html_document
+---
+**The following packages are needed to be installed before running this code. If they are already installed on your computer simply run this block to have the script access their methods. **
+```{r}
+library(phyloseq)
+library(ggplot2)
+library(vegan)
+library(plyr)
+library(psadd)
+```
+# Step 1: Reading in the RDS files
+- These RDS files do not have the phylo tree attached to them
+- You must change the working directory to the correct folder in the repository for this to work
+- For example, here is what I set mine to: **setwd("C:/Users/gnick/OneDrive/Desktop/Apples/PhyloObj")**
+```{r}
+#this line of code MUST be changed to where your PhyloObj folder is stored, this will only work on my computer as currently written as it is my computers absolute path
+setwd("C:/Users/gnick/OneDrive/Desktop/Apples/PhyloObj")
+
+stem <- readRDS("Stem.RDS")
+stem_end <- readRDS("Stem_end.RDS")
+seed <- readRDS("seeds.RDS")
+peel <- readRDS("peel.RDS")
+calyx <- readRDS("calyx_end.RDS")
+pulp <- readRDS("fruit_pulp.RDS")
+```
+
+# Step 2: Condensing the objects into one phyloseq object
+- This will be done twice
+  + Once with all the apple parts: appleALL
+  + Once without the seed, as the group that published the paper did: apple
+```{r}
+appleALL <- merge_phyloseq(seed, peel, calyx, pulp, stem, stem_end)
+apple <- merge_phyloseq(peel, stem, stem_end, calyx, pulp)
+```
+
+# Step 3: Constructing the first PCA
+- will be using the appleALL object
+- PCoA method = co
+  + There group used Unifront however we are unable to use this method due to the difference in our OTU pipline
+  + Both will result in similar conclusions just how the PCoA looks may be slightly different
+
+```{r}
+#ordinate
+apple_pcoa1 <- ordinate(
+  physeq = appleALL,
+  method = "PCoA",
+  distance = "co"  # the co is the best method for displaying the groupings
+)
+p1 <- plot_ordination(
+  physeq = appleALL,
+  ordination = apple_pcoa1,
+  color = "tissue",
+  shape = "mngmt",
+  title = "PCoA of the bacterial communities in Apples by tissue"
+)
+# the X axis had 7.2% of variation captured and the Y axis 6.3% captures
+p1EDIT <- p1 + ylab(label = "PC2 (6.3% of total variation)") + xlab(label = "PC1 (7.2% of total variation)")+ labs(tag = "A", title = NULL) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) + geom_hline(yintercept = 0) + geom_vline(xintercept = 0) + theme(legend.position = "bottom", legend.box = "horizontal") + guides(shape = FALSE) + theme(legend.key=element_blank()) + coord_fixed(ratio = 1) + labs(color = "Tissue:")
+p1EDIT
+p1
+```
+
+# Step 4: Constructing the second PCoA
+- will be using the appleALL object
+- The team visualied the same graph this time coloring the organic and conventional managemnt methods
+```{r}
+#ordinate
+apple_pcoa2 <- ordinate(
+  physeq = appleALL,
+  method = "PCoA",
+  distance = "co"  # the co is the best method for displaying the groupings
+)
+p2 <- plot_ordination(
+  physeq = appleALL,
+  ordination = apple_pcoa2,
+  color = "mngmt",
+  title = "PCoA of the bacterial communities in Apples by mngmt method"
+)
+# the X axis had 7.2% of variation captured and the Y axis 6.3% captures
+p2EDIT <- p2 + ylab(label = "PC2 (6.3% of total variation)") + xlab(label = "PC1 (7.2% of total variation)")+ labs(tag = "B", title = NULL) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) + geom_hline(yintercept = 0) + geom_vline(xintercept = 0) + theme(legend.position = "bottom", legend.box = "horizontal") + guides(shape = FALSE) + theme(legend.key=element_blank()) + coord_fixed(ratio = 1) + labs(color = "Managment Practice:")
+p2EDIT
+p2
+```
+
+# Step 5: Constructing the third PCoA
+- using the apple object
+  + this one is excluding the seeds for the organic and conventional groups
+- coloring my managment practice as in the second PCoA
+```{r}
+#ordinate
+apple_pcoa3 <- ordinate(
+  physeq = apple,
+  method = "PCoA",
+  distance = "co"  # the co is the best method for displaying the groupings
+)
+p3 <- plot_ordination(
+  physeq = apple,
+  ordination = apple_pcoa3,
+  color = "mngmt",
+  title = "PCoA of the bacterial communities in Apples (no seed) by mngmt method"
+)
+# the X axis had 7.2% of variation captured and the Y axis 6.3% captures
+p3EDIT <- p3 + ylab(label = "PC2 (7% of total variation)") + xlab(label = "PC1 (7.8% of total variation)")+ labs(tag = "C", title = NULL) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) + geom_hline(yintercept = 0) + geom_vline(xintercept = 0) + theme(legend.position = "bottom", legend.box = "horizontal") + guides(shape = FALSE) + theme(legend.key=element_blank()) + coord_fixed(ratio = 1) + guides(color=FALSE)
+p3EDIT
+p3
+```
+
+# Step 6: Saving all of the PCoA images with ggsave
+- will be saving them as .png files
+- saving them into the figure 3 folder
+  + NOTE: this chunck of code will only work for my computer and you need to change the working directory on the chunk of code to wherever you want the figures to be saved for your computer
+```{r}
+setwd("C:/Users/gnick/OneDrive/Desktop/Apples/Figure3")
+ggsave("Figure3A.jpeg", plot = p1EDIT)
+ggsave("Figure3B.jpeg", plot = p2EDIT)
+ggsave("Figure3C.jpeg", plot = p3EDIT)
+```
+
