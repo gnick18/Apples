@@ -1,0 +1,178 @@
+---
+title: "Remaining Tissues"
+author: "ClayBae"
+date: "11/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+install.packages("knitr")
+BiocManager::install(c("BiocStyle"))
+BiocManager::install(c("dada2"))
+BiocManager::install(c("phyloseq"))
+BiocManager::install(c("DECIPHER"))
+BiocManager::install(c("phangorn"))
+BiocManager::install(c("phangorn"))
+BiocManager::install(c("msa"))
+library("knitr")
+library("BiocStyle")
+library("dada2")
+library("phyloseq")
+library("DECIPHER")
+library("phangorn")
+library("msa")
+.cran_packages <- c("ggplot2", "gridExtra")
+.bioc_packages <- c("dada2", "phyloseq", "DECIPHER", "phangorn")
+.inst <- .cran_packages %in% installed.packages()
+if(any(!.inst)) {
+   install.packages(.cran_packages[!.inst])
+}
+.inst <- .bioc_packages %in% installed.packages()
+#if(any(!.inst)) {
+ #  source("http://bioconductor.org/biocLite.R")
+ #  biocLite(.bioc_packages[!.inst], ask = F)
+#}
+# Load packages into session, and print package version
+sapply(c(.cran_packages, .bioc_packages), require, character.only = TRUE)
+```
+
+
+```{r}
+path <- "C:/Users/ccarley/Desktop/unzipped"   #Change to the directory where the fastq files are after unzipping
+list.files(path)
+```
+
+stem <- sort(list.files(path, pattern="St.", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(stem), "_"), `[`, 1)
+
+stem_end <- sort(list.files(path, pattern="StEnd.", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(stem_end), "_"), `[`, 1)
+
+peel <- sort(list.files(path, pattern="Pee.", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(peel), "_"), `[`, 1)
+
+fruit_pulp <- sort(list.files(path, pattern="Fru.", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(fruit_pulp), "_"), `[`, 1)
+
+calyx_end <- sort(list.files(path, pattern="CaEnd.", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(calyx_end), "_"), `[`, 1)
+
+
+Here I'm sorting out the different tissue types by files. 
+```{r}
+seeds <- sort(list.files(path, pattern="Seed.", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(seeds), "_"), `[`, 1)
+
+```
+
+#Next I plotted the quality scores for each sample.
+#```{r}
+#plotQualityProfile(seeds[1:8])
+#```
+
+I set up the object to place the filtered reads in.
+```{r}
+filtSeeds <- file.path(path, "filtered", paste0(sample.names, "filt.fastq"))
+names(filtSeeds) <- sample.names
+```
+
+Next I filtered the reads using the default settings.
+```{r}
+out <- filterAndTrim(seeds, filtSeeds, truncQ = 2, truncLen = 0, maxLen = Inf, rm.phix=TRUE,
+              compress=TRUE, multithread=FALSE) # On Windows set multithread=FALSE
+head(out)
+```
+
+Then we learn the error rates of basecalling in the reads.
+```{r}
+errF <- learnErrors(filtSeeds, multithread=TRUE)
+```
+
+#We plot the error rates to examine them.
+#```{r}
+#plotErrors(errF, nominalQ=TRUE)
+#```
+
+Now we are ready to align the reads to reference sequences.
+```{r}
+dadaSeeds <- dada(filtSeeds, err=errF, multithread=TRUE)
+```
+
+```{r}
+seqtab <- makeSequenceTable(dadaSeeds)
+dim(seqtab)
+```
+```{r}
+table(nchar(getSequences(seqtab)))
+```
+
+Remove chimeras.
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=FALSE, verbose=TRUE)
+```
+
+And assign taxonomy. This could have been done using species level as well.
+```{r}
+taxa <- assignTaxonomy(seqtab.nochim, "C:/Users/ccarley/Desktop/unzipped/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
+```
+
+```{r}
+library(dplyr)
+samples.out <- rownames(seqtab.nochim)
+```
+
+
+Test for phylogenetic tree.
+```{r}
+seqs <- getSequences(seqtab)
+names(seqs) <- seqs # This propagates to the tip labels of the tree
+mult <- msa(seqs, method="ClustalW", type="dna", order="input")
+```
+
+
+
+```{r}
+library("phangorn")
+phang.align <- as.phyDat(mult, type="DNA", names=getSequence(seqtab))
+dm <- dist.ml(phang.align)
+treeNJ <- NJ(dm) # Note, tip order != sequence order
+fit = pml(treeNJ, data=phang.align)
+
+## negative edges length changed to 0!
+
+fitGTR <- update(fit, k=4, inv=0.2)
+fitGTR <- optim.pml(fitGTR, model="GTR", optInv=TRUE, optGamma=TRUE,
+                       rearrangement = "stochastic", control = pml.control(trace = 0))
+detach("package:phangorn", unload=TRUE)
+```
+
+Next I created the metadata.
+```{r}
+samples.out <- as.data.frame(samples.out)
+samples.out <- mutate(samples.out, tissue = c('seed', 'seed', 'seed', 'seed', 'seed', 'seed', 'seed', 'seed'))
+samples.out <- mutate(samples.out, mngmt = c('conventional', 'conventional', 'conventional', 'conventional', 'organic', 'organic', 'organic', 'organic'))
+rownames(samples.out) <- samples.out$samples.out
+samples.out$samples.out <- NULL
+```
+
+And finally generated the phyloseq object.
+```{r}
+seeds <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows = FALSE), sample_data(samples.out), tax_table(taxa))
+```
+
+```{r}
+dna <- Biostrings::DNAStringSet(taxa_names(seeds))
+names(dna) <- taxa_names(seeds)
+seeds <- merge_phyloseq(seeds, dna)
+taxa_names(seeds) <- paste0("ASV", seq(ntaxa(seeds)))
+```
+
+```{r}
+saveRDS(seeds, "../seeds.RDS")
+```
