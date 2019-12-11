@@ -12,6 +12,8 @@ BiocManager::install(c("phyloseq"))
 
 setwd("./Apples/") #set this to the location you downloaded the apples.RDS file. Otherwise this won't work!
 library(phyloseq)
+library(ggplot2)
+library(dplyr)
 library(tidyverse)
 
 seeds <- readRDS("./PhyloObj/seeds.RDS")
@@ -25,10 +27,18 @@ apples <- merge_phyloseq(stem,stem_end,peel,pulp,seeds,calyx)
 ```
 
 
+# Found way to more accurately recreate Figure 1 (With Abby's help!)
 ```{r}
+
+
+applesdf <- psmelt(apples)
+applesdf
+ggplot() + geom_bar(aes(y= Abundance,x=tissue, fill= tissue), data=applesdf, stat= "identity")
 
 ```
 
+
+# Counting Number of Reads (the initial plan to mimic Figure 1)
 
 **Reading the OTU table from the phyloseq object**
 ```{r}
@@ -57,9 +67,8 @@ for (i in 1:nrow(otu_table_copy)) {
 **Create data frame from lists**
 ```{r}
 reads_count.data <- data.frame(sample_name,reads)
-
-reads_count.data
 ```
+
 
 **Separating out conventional management data  to make graph less crowded**
 
@@ -72,31 +81,34 @@ conventional <- reads_count.data[grep(".C", reads_count.data$sample_name), ]
 conventional <- mutate(conventional, num_code = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24))
 
 #add sample type column so they can be filled according to type
-conventional <- mutate(conventional, sample_type = c("stem","stem","stem","stem","Stem end","Stem end", "Stem end", "Stem end", "Peel", "Peel","Peel","Peel","Fruit pulp","Fruit pulp","Fruit pulp", "Fruit pulp", "Seed","Seed","Seed","Seed","Calyx end","Calyx end","Calyx end", "Calyx end"))
-
-conventional
+conventional <- mutate(conventional, sample_type = c("Stem","Stem","Stem","Stem","Stem end","Stem end", "Stem end", "Stem end", "Peel", "Peel","Peel","Peel","Fruit pulp","Fruit pulp","Fruit pulp", "Fruit pulp", "Seed","Seed","Seed","Seed","Calyx end","Calyx end","Calyx end", "Calyx end"))
 ```
 
 _Organic_
 ```{r}
+#grep only the organic data
 organic <- reads_count.data[grep(".H", reads_count.data$sample_name), ]
 
+#create a number code for each sample to clean up the x axis
 organic <- mutate(organic, num_code = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24))
 
-organic <- mutate(organic, sample_type = c("stem","stem","stem","stem","Stem end","Stem end", "Stem end", "Stem end", "Peel", "Peel","Peel","Peel","Fruit pulp","Fruit pulp","Fruit pulp", "Fruit pulp", "Seed","Seed","Seed","Seed","Calyx end","Calyx end","Calyx end", "Calyx end"))
-
-organic
+#add column that has the type of tissue the sample is from.
+organic <- mutate(organic, sample_type = c("Stem","Stem","Stem","Stem","Stem end","Stem end", "Stem end", "Stem end", "Peel", "Peel","Peel","Peel","Fruit pulp","Fruit pulp","Fruit pulp", "Fruit pulp", "Seed","Seed","Seed","Seed","Calyx end","Calyx end","Calyx end", "Calyx end"))
 ```
 
 **Graph of Conventional samples**
 ```{r}
+#make a bar graph of the conventional data where the x axis is the sample number and the y axis is the number of reads. Colored according to the sample type.
 ggplot(data=conventional, aes(x=num_code, y=reads,fill=sample_type)) + ylab("Number of Reads")+ xlab("Sample Number")+ ggtitle("Conventional Apples")+
   geom_bar(stat="identity")
 ```
 
 **Graph of Organic Samples**
 ```{r}
+#make a bar graph of the organic data where the x axis is the sample number and the y axis is the number of reads. Colored according to the sample type.
 ggplot(data=organic, aes(x=num_code, y=reads,fill=sample_type)) +ylab("Number of Reads")+ xlab("Sample Number")+ ggtitle("Organic Apples")+
   geom_bar(stat="identity")
 ```
+
+
 
