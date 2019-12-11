@@ -1,0 +1,22 @@
+---
+title: "Sandbox Castle 2"
+author: "ClayBae"
+date: "12/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This chunk will take any phyloseq object and convert it into a data frame for use as a df (for ggploting ect.)
+
+```{r}
+library(dplyr)
+peel2df <- psmelt(Peel2)
+peel2reduced <- filter(peel2df, Abundance!=0)
+peel2reduced
+total_abundance <- sum(peel2reduced$Abundance)
+peel2less <- filter(peel2df, Abundance > total_abundance*.001)
+peel2less
+```
+
