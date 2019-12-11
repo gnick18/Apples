@@ -1,0 +1,19 @@
+"0","library(phyloseq)"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"2","Registered S3 method overwritten by 'dplyr':
+  method           from
+  print.rowwise_df     
+"
+"0","library(ggplot2)"
+"0","library(vegan)"
+"2","Loading required package: permute
+"
+"2","Loading required package: lattice
+"
+"2","This is vegan 2.5-6
+"
+"0","library(plyr)"
+"0","library(psadd)"

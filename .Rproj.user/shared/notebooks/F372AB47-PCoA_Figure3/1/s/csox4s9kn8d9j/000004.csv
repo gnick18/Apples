@@ -1,0 +1,7 @@
+"0","setwd(""C:/Users/gnick/OneDrive/Desktop/Apples/Figure3"")"
+"2","The working directory was changed to C:/Users/gnick/OneDrive/Desktop/Apples/Figure3 inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks."
+"0","ggsave(""Figure3A.jpeg"", plot = p1EDIT)"
+"2","Saving 7 x 7 in image
+"
+"0","ggsave(""Figure3B.jpeg"", plot = p2EDIT)"
+"0","ggsave(""Figure3C.jpeg"", plot = p3EDIT)"

@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575907108010.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2036917741",
+    "id" : "DB024469",
+    "lastKnownWriteTime" : 1575906615,
+    "last_content_update" : 1575906615,
+    "path" : "C:/Users/gnick/OneDrive/Desktop/Apples/TheSandbox/GN_sandbox/BetaDiversityTest2.Rmd",
+    "project_path" : "TheSandbox/GN_sandbox/BetaDiversityTest2.Rmd",
+    "properties" : {
+        "cursorPosition" : "48,21",
+        "scrollLine" : "38"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

@@ -1,0 +1,2 @@
+"0","appleALL <- merge_phyloseq(seed, peel, calyx, pulp, stem, stem_end)"
+"0","apple <- merge_phyloseq(peel, stem, stem_end, calyx, pulp)"

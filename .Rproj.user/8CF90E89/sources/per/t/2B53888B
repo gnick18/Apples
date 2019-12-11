@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1575917140929.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1626003406",
+    "id" : "2B53888B",
+    "lastKnownWriteTime" : 1575911282,
+    "last_content_update" : 1575911282,
+    "path" : "C:/Users/gnick/OneDrive/Desktop/Apples/Figure3/PCoA_Figure3.Rmd",
+    "project_path" : "Figure3/PCoA_Figure3.Rmd",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
