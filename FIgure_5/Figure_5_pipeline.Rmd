@@ -1,0 +1,41 @@
+---
+title: "FIgure 5"
+author: "ClayBae"
+date: "12/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Working to reproduce figure 5
+loaded in the RDF data frames from github
+
+```{r}
+total <- rbind(calyx, fruit_pulp, peel, seeds, stem, stem_end)
+total3 <- total[total$Family != 'Mitochondria',]
+
+# Create a basic bar
+O_Stem <- total3 %>%
+  filter(tissue == "seed") %>%
+  filter(mngmt == "organic") 
+
+bp <-  ggplot(seeds_organic, aes(x="", y=Abundance, fill=Family))+ geom_bar(width = 1, stat = "identity")
+
+ # Convert to pie (polar coordinates) and add labels
+pie <- bp + coord_polar("y", start=0)
+ 
+
+# Remove labels and add title
+pie = pie + labs(x = NULL, y = NULL, fill = NULL, title = "organic seeds Family")
+ 
+# Tidy up the theme
+
+pie = pie + theme_classic() + theme(axis.line = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          plot.title = element_text(hjust = 0.5, color = "#666666"))
+
+
+```

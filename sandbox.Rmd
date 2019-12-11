@@ -1,0 +1,91 @@
+---
+title: "FIgure 5"
+author: "ClayBae"
+date: "12/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Working to reproduce figure 5
+
+
+```{r}
+calyx_organic <- calyx[calyx$mngmt == 'organic',]
+calyx_conventional <- calyx[calyx$mngmt == 'conventional',]
+
+fruit_pulp_organic <- fruit_pulp[fruit_pulp$mngmt == 'organic',]
+fruit_pulp_conventional <- fruit_pulp[fruit_pulp$mngmt == 'conventional',]
+
+peel_organic <- peel[peel$mngmt == 'organic',]
+peel_conventional <- peel[peel$mngmt == 'conventional',]
+
+seeds_organic <- seeds[seeds$mngmt == 'organic',]
+seeds_conventional <- seeds[seeds$mngmt == 'conventional',]
+
+stem_organic <- stem[stem$mngmt == 'organic',]
+stem_conventional <- stem[stem$mngmt == 'conventional',]
+
+stem_end_organic <- stem_end[stem_end$mngmt == 'organic',]
+stem_end_conventional <- stem_end[stem_end$mngmt == 'conventional',]
+
+
+
+
+
+
+
+```
+
+
+```{r}
+# Create a basic bar
+bp<- ggplot(total, aes(x="", y=Abundance, fill=Genus))+
+geom_bar(width = 1, stat = "identity")
+bp
+ 
+# Convert to pie (polar coordinates) and add labels
+pie <- bp + coord_polar("y", start=0)
+pie
+ 
+# Add color scale (paired)
+
+ 
+# Remove labels and add title
+pie = pie + labs(x = NULL, y = NULL, fill = NULL, title = "Both")
+ 
+# Tidy up the theme
+pie = pie + theme_classic() + theme(axis.line = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          plot.title = element_text(hjust = 0.5, color = "#666666"))
+
+
+pie
+
+library(dplyr)
+library(tidyr)
+
+names <- colnames(total)
+names(test) <- names
+
+
+test <- data.frame(t(total)) %>%
+  fill(., names(.)) %>%
+  t()
+
+names <- colnames(total)
+
+
+```
+
+
+```{r}
+total <- rbind(calyx, fruit_pulp, peel, seeds, stem, stem_end)
+
+unique = unique(total$Genus)
+
+unique
+```
